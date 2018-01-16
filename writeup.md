@@ -148,7 +148,7 @@ def compute_off_center(left_fit, right_fit, y_eval=1400, center_pix=1225):
     right_x_bottom = right_fit[0]*y_eval**2 + right_fit[1]*y_eval + right_fit[2]
     mid_x = (left_x_bottom + right_x_bottom) / 2.0
     off_center_px = center_pix - mid_x
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+    xm_per_pix = 3.7/1500 # Lane distance is 3 meter, occupying 1500 pixels in the warped image.
     return off_center_px * xm_per_pix
 ```
 
