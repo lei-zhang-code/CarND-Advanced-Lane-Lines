@@ -74,14 +74,14 @@ The perspective transform is done through a mapping between trapezoid on a strai
 
 ```python
 tpzd = [[580, 460], [700, 460], [1105, 719], [205, 719]]
-rect = [[205, 0], [1105, 0], [1105, 719], [205, 719]]
+rect = [[500, 0], [2000, 0], [2000, 1400], [500, 1400]]
 M = cv2.getPerspectiveTransform(np.float32(tpzd), np.float32(rect))
 ```
 
 I apply the perspective transform via
 
 ```python
-warped = cv2.warpPerspective(undistorted, M, (1280, 720), flags=cv2.INTER_LINEAR)
+warped = cv2.warpPerspective(undistorted, M, (2500, 1400), flags=cv2.INTER_LINEAR)
 ```
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
@@ -116,6 +116,8 @@ def compute_lane_offset_px(x, y, A, B):
 
 For all the rest of the frames, I find the lane line pixels without using the sliding window approach as I used for the first frame. Instead, I used the polynomial extracted from the previous frame plus a margin to search for lane line points:
 
+I used a queue structure to save the past 5 frames' left and right fittings. When I draw the polynomial line, I used the averaged polynomial line of all 5 frames.
+
 ![alt_text][lazy_search]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
@@ -123,10 +125,10 @@ For all the rest of the frames, I find the lane line pixels without using the sl
 Once I have the left and right line polynomials `left_fix` and `right_fit`, I computed the curvature as below:
 
 ```python
-def compute_curvature(left_fit, right_fit, y_eval=720):
+def compute_curvature(left_fit, right_fit, y_eval=1400):
     # Define conversions in x and y from pixels space to meters
-    ym_per_pix = 30/720 # meters per pixel in y dimension
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+    ym_per_pix = 3/200 # Each long dash is 3 meters, it occupies about 200 pixels in the warped image.
+    xm_per_pix = 3.7/1500 # Lane distance is 3 meter, occupying 1500 pixels in the warped image.
     # Calculate the new radii of curvature
     left_A = left_fit[0] * xm_per_pix / (ym_per_pix**2)
     left_B = left_fit[1] * xm_per_pix / ym_per_pix
@@ -141,7 +143,7 @@ def compute_curvature(left_fit, right_fit, y_eval=720):
 The offset from the center of the lane is computed as:
 
 ```python
-def compute_off_center(left_fit, right_fit, y_eval=720, center_pix=640):
+def compute_off_center(left_fit, right_fit, y_eval=1400, center_pix=1225):
     left_x_bottom = left_fit[0]*y_eval**2 + left_fit[1]*y_eval + left_fit[2]
     right_x_bottom = right_fit[0]*y_eval**2 + right_fit[1]*y_eval + right_fit[2]
     mid_x = (left_x_bottom + right_x_bottom) / 2.0
